@@ -144,8 +144,6 @@ namespace chi
 			byval from_socket as uint32_t _
 		) as int32_t
 	
-	#if 0
-	   'don't want to reuse..
 		dim as int32_t reuse = C_TRUE
 		if( setsockopt( from_socket, _ 
 		               SOL_SOCKET, _ 
@@ -154,8 +152,19 @@ namespace chi
 		               len(long) ) = SOCKET_ERROR ) then 
 			return FAILED_REUSE
 		end if
-   #endif
-	    
+        
+        '当程序异常中断的时候，重启程序会显示端口占用
+	    dim As linger linger_opt
+        linger_opt.l_onoff = 1   ' 启用 LINGER
+        linger_opt.l_linger = 0  ' 直接关闭，不等待
+        if( setsockopt( from_socket, _
+                        SOL_SOCKET, _
+                        SO_LINGER, _
+                        @linger_opt, _
+                        SizeOf(linger_opt)) = SOCKET_ERROR) then
+			return FAILED_REUSE
+		end if
+
 		info = type( AF_INET, htons( port ), ip )
 		if bind( from_socket, _ 
 		         cast(sockaddr ptr, @info), _ 
