@@ -4,13 +4,13 @@ namespace chi
 	
 	function TCP_client _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref info as socket_info, _
 			byref server_ as string, _ 
-			byval port as integer _ 
-		) as integer
+			byval port as int32_t _ 
+		) as int32_t
 	
-		dim as uinteger ip = resolve( server_ )
+		dim as uint32_t ip = resolve( server_ )
 		if( ip = NOT_AN_IP ) then
 			return FAILED_RESOLVE
 		end if
@@ -21,13 +21,13 @@ namespace chi
 	
 	function TCP_client _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref info as socket_info, _
-			byval ip as integer, _ 
-			byval port as integer _ 
-		) as integer
+			byval ip as int32_t, _ 
+			byval port as int32_t _ 
+		) as int32_t
 	
-		dim as uInteger new_sock = new_socket( AF_INET, SOCK_STREAM, IPPROTO_IP )
+		dim as uint32_t new_sock = new_socket( AF_INET, SOCK_STREAM, IPPROTO_IP )
 		if new_sock = SOCKET_ERROR then
 			return FAILED_INIT
 		end if
@@ -38,13 +38,13 @@ namespace chi
 	
 	function TCP_server _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref info as socket_info, _
-			byval port as integer, _ 
-			byval max_queue as integer _ 
-		) as integer
+			byval port as int32_t, _ 
+			byval max_queue as int32_t _ 
+		) as int32_t
 	
-		dim as uinteger res = new_socket( AF_INET, SOCK_STREAM, IPPROTO_IP ), func_res
+		dim as uint32_t res = new_socket( AF_INET, SOCK_STREAM, IPPROTO_IP ), func_res
 		if( res = SOCKET_ERROR ) then 
 			return FAILED_INIT
 		end if
@@ -63,10 +63,10 @@ namespace chi
 	
 	function TCP_accept _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref client_info as sockaddr_in ptr, _ 
-			byval listener as uinteger _ 
-		) as integer 
+			byval listener as uint32_t _ 
+		) as int32_t 
 		
 		dim as integer size = len(sockaddr_in)
 		dim as sockaddr_in discard
@@ -85,15 +85,15 @@ namespace chi
 		
 	function TCP_server_accept _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref then_ as double, _ 
 			byref client_info as sockaddr_in ptr, _ 
-			byval listener as uinteger _ 
-		) as integer 
+			byval listener as uint32_t _ 
+		) as int32_t 
 		
-		dim as uinteger socket
+		dim as uint32_t socket
 		dim as double now_ = timer
-		dim as integer func_res
+		dim as int32_t func_res
 		
 		if( listener ) then
 			if( then_ = 0 ) then

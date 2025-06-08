@@ -4,20 +4,20 @@
 	function socket.get _ 
 		( _ 
 			byref data_ as t, _
-			byref elems as integer, _ 
-			byval time_out as integer, _ 
-			byval peek_only as integer _
-		) as integer
+			byref elems as int32_t, _ 
+			byval time_out as int32_t, _ 
+			byval peek_only as int32_t _
+		) as int32_t
 		
 		var current = cast(ubyte ptr, @data_)
 		dim as double then_, now_ = timer
 		
 		then_ = time_out/1000
 		
-		dim as integer chunk_ = elems*len(t), piece
+		dim as int32_t chunk_ = elems*len(t), piece
 		if( chunk_ ) then
 			do
-				dim as integer available_data = length( )
+				dim as int32_t available_data = length( )
 				if( chunk_ <= available_data ) then
 					piece = chunk_
 				else
@@ -62,23 +62,23 @@
 namespace chi
 	
 	DEFINE_SOCKET_GET(short)
-	DEFINE_SOCKET_GET(integer)
+	DEFINE_SOCKET_GET(int32_t)
 	DEFINE_SOCKET_GET(double )
 	DEFINE_SOCKET_GET(ubyte  )
 	
 	function socket.get _ 
 		( _ 
 			byref data_ as string, _
-			byref elems as integer, _ 
-			byval time_out as integer, _ 
-			byval peek_only as integer _
-		) as integer
+			byref elems as int32_t, _ 
+			byval time_out as int32_t, _ 
+			byval peek_only as int32_t _
+		) as int32_t
 		
 		dim as double delay, t
-		dim as integer hdr, no_block = (time_out = ONLY_ONCE), ok_time = (time_out > 0)
+		dim as int32_t hdr, no_block = (time_out = ONLY_ONCE), ok_time = (time_out > 0)
 		dim as string ptr current = cast(string ptr, @data_)
 		
-		for i as integer = 0 to elems-1
+		for i as int32_t = 0 to elems-1
 			delay = time_out/1000
 			
 			t = timer

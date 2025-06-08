@@ -1,3 +1,4 @@
+#Define fbc *.bas -lib -mt -x chisock -w 1
 #include "chisock.bi"
 
 namespace chi
@@ -18,36 +19,46 @@ namespace chi
 		p_recv_thread = threadcreate( @recv_proc, @this, 10140 )
 		p_send_thread = threadcreate( @send_proc, @this, 10140 )
 		
-		p_recv_data = allocate( BUFF_SIZE )
-		p_send_data = allocate( BUFF_SIZE )
+		p_recv_data = allocate( RECV_BUFF_SIZE )
+		p_send_data = allocate( SEND_BUFF_SIZE )
 		
 	end constructor
 	
 	destructor socket( )
-		
+
 		hold = FALSE
+		
+		mutexlock( p_send_lock )
+		mutexlock( p_recv_lock )
+		
+		p_send_size = 0
+		p_send_caret = 0
+		
 		close( )
 		
 		p_dead = TRUE
 		
+		mutexunlock( p_send_lock )
+		mutexunlock( p_recv_lock )
+
 		threadwait( p_recv_thread )
 		threadwait( p_send_thread )
-		
+
 		conddestroy( p_go_signal )
 		conddestroy( p_hold_signal )
-		
+
 		mutexdestroy( p_recv_lock )
 		mutexdestroy( p_send_lock )
 		mutexdestroy( p_go_lock )
 		mutexdestroy( p_hold_lock )
-		
+
 		deallocate( p_recv_data )
 		deallocate( p_send_data )
 		
 	end destructor
 	
 	'' ghetto-sync
-	property socket.hold( byval state as integer )
+	property socket.hold( byval state as int32_t )
 		
 		select case state
 		case TRUE
@@ -75,46 +86,46 @@ namespace chi
 	
 	function socket.length _ 
 		( _ 
-		) as integer
+		) as int32_t
 		
 		function = p_recv_size-p_recv_caret
 		
-	end function
-	
+	end Function
+		
 	function socket.close _ 
 		( _ 
-		) as integer
+		) as int32_t
+		
+		if( ( p_socket = SOCKET_ERROR ) and ( p_listener = SOCKET_ERROR ) ) then exit function
 		
 		do while (p_send_size or p_send_caret)
-			sleep 1, 1
-		loop
-		
-		if( ( p_socket = SOCKET_ERROR ) and ( p_socket = SOCKET_ERROR ) ) then exit function
-		
+			sleep 26, 1
+		loop		
+	
 		dim as socket_lock r_lock = p_recv_lock, s_lock = p_send_lock
-		dim as integer s=any, res=SOCKET_OK
-		
+		dim as int32_t s=any, res=SOCKET_OK
+
 		if( p_socket <> SOCKET_ERROR ) then
 			s = SOCKET_ERROR
 			swap p_socket, s
-			res = chi.close( s ) 
+			res = chi.close( s )
 		end if
-		
+
 		if( res = SOCKET_OK ) then
 			if( p_listener <> SOCKET_ERROR ) then
 				s = SOCKET_ERROR
 				swap p_listener, s
 				res = chi.close( s ) 
 			end if
-		end if
-		
+		end if		
+
 		function = res
 		
 	end function
 	
 	function socket.is_closed _ 
 		( _ 
-		) as integer
+		) as int32_t
 		
 		function = ((p_socket = SOCKET_ERROR) and (p_listener = SOCKET_ERROR))
 		
@@ -122,56 +133,64 @@ namespace chi
 	
 	property socket.recv_limit _ 
 		( _ 
-			byref limit as double _ 
+			byref limit as int32_t _ 
 		)
 		
-		p_recv_limit = limit * 1024
+		mutexlock( p_recv_lock )
+		p_recv_limit = limit
+		mutexunlock( p_recv_lock )
+		
 	end property
 	
 	property socket.send_limit _ 
 		( _ 
-			byref limit as double _ 
+			byref limit as int32_t _ 
 		)
 		
-		p_send_limit = limit * 1024
+		mutexlock( p_send_lock )
+		p_send_limit = limit
+		mutexunlock( p_send_lock )
+		
 	end property
 	
 	property socket.recv_limit _ 
 		( _ 
-		) as double
+		) as int32_t
 		
-		return p_recv_limit / 1024
+		mutexlock( p_recv_lock )
+		property = p_recv_limit
+		mutexlock( p_recv_lock )
+		
 	end property
 	
 	property socket.send_limit _ 
 		( _ 
-		) as double
+		) as int32_t
 		
-		return p_send_limit / 1024
+		mutexlock( p_send_lock )
+		property = p_send_limit
+		mutexunlock( p_send_lock )
+		
 	end property
 	
 	function socket.send_rate _ 
 		( _ 
-		) as integer
+		) as int32_t
 		
-		var res = p_send_rate
-		if( p_send_limit > 0 ) then
-			res *= 10
-		end if
-		
-		function = res
+		mutexlock( p_send_lock )
+		function = p_send_rate
+		mutexunlock( p_send_lock )
+
 	end function
 	
 	function socket.recv_rate _ 
 		( _ 
-		) as integer
+		) as int32_t
 		
-		var res = p_recv_rate
-		if( p_recv_limit > 0 ) then
-			res *= 10
-		end if
+		mutexlock( p_recv_lock )
+		function = p_recv_rate
+		mutexunlock( p_recv_lock )
 		
-		function = res
 	end function
 	
 	function socket.connection_info _ 

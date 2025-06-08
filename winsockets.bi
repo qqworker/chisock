@@ -22,8 +22,8 @@
 
 type WSAData
 
-	wVersion as ushort
-	wHighVersion as ushort
+	wVersion as uint16_t
+	wHighVersion as uint16_t
 	szDescription as zstring * WSADESCRIPTION_LEN + 1
 	szSystemStatus as zstring * WSASYS_STATUS_LEN + 1
 	iMaxSockets as ushort
@@ -38,7 +38,7 @@ type hostent
 	h_aliases as zstring ptr ptr
 	h_addrtype as short
 	h_length as short
-	h_addr_list as uinteger ptr ptr
+	h_addr_list as uint32_t ptr ptr
 
 	#define h_addr h_addr_list[0]	
 
@@ -62,7 +62,7 @@ end type
 
 union in_addr
 
-	S_addr as uinteger
+	S_addr as uint32_t
 	S_un_w as in_addr_S_un_S_un_w
 	S_un_b as in_addr_S_un_S_un_b
 
@@ -77,7 +77,7 @@ end union
 type sockaddr_in
 
 	sin_family as short
-	sin_port as ushort
+	sin_port as uint16_t
 	sin_addr as in_addr
 	sin_zero(0 to 7) as byte
 
@@ -85,7 +85,7 @@ end type
 
 type sockaddr
 
-	sa_family as ushort
+	sa_family as uint16_t
 	sa_data(0 to 13) as byte
 
 end type
@@ -176,8 +176,9 @@ declare function setsockopt alias "setsockopt" (byval as integer, byval as integ
 declare function htons alias "htons" (byval as ushort) as ushort
 declare function htonl alias "htonl" (byval as ulong) as ulong
 declare function ntohs alias "ntohs" (byval as ushort) as ushort
+declare function ntohl alias "ntohl" (byval as ulong) as ulong
 
-declare function gethostbyname alias "gethostbyname" (byval as zstring ptr) as hostent ptr
+Declare function gethostbyname alias "gethostbyname" (byval as zstring ptr) as hostent ptr
 declare function getpeername alias "getpeername" (byval as uinteger, byval as sockaddr ptr, byval as integer ptr) as integer
 declare function gethostbyaddr alias "gethostbyaddr" (byval as zstring ptr, byval as integer, byval as integer) as hostent ptr
 declare function gethostname alias "gethostname" (byval as zstring ptr, byval as integer) as integer
@@ -189,4 +190,3 @@ declare function inet_ntoa alias "inet_ntoa" (byval as in_addr) as zstring ptr
 #define h_errno WSAGetLastError
 
 #inclib "ws2_32"
-

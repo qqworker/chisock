@@ -5,12 +5,10 @@ namespace chi
 	sub socket.send_proc( byval opaque as any ptr )
 		dim as socket ptr this = opaque
 		
-		dim as integer res, standby, chunk_
+		dim as int32_t res, standby, chunk_
 		do while( this->p_dead = FALSE )
-			
-			sleep 1, 1
-			
-			if( this->p_hold = TRUE ) then 
+				
+			If( this->p_hold = TRUE ) then 
 				
 				mutexlock( this->p_hold_lock )
 				mutexunlock( this->p_hold_lock )
@@ -25,16 +23,63 @@ namespace chi
 				
 			end if
 			
-			if( this->p_socket = SOCKET_ERROR ) then continue do
+			if( this->p_socket = SOCKET_ERROR ) Then
+			   sleep 100, 1
+			   continue Do
+			EndIf
 			
 			standby = FALSE
 			
-			'' send in chunks
-			chunk_ = this->p_send_size-this->p_send_caret
-			'chunk_ = iif( chunk_ > 1024, 1024, chunk_ )
+			scope
+			   
+			   dim as socket_lock lock_ = this->p_send_lock			   
+			   
+   			'' handle speed limits
+      		if( this->p_send_limit > 0 ) then
+      			
+      			if( abs(timer - this->p_send_timer) >= (1 / BUFF_RATE) ) then
+      				this->p_send_timer = timer
+      				
+      				this->p_send_accum -= (this->p_send_limit / BUFF_RATE)
+      				
+      				if( this->p_send_accum < 0 ) then
+      					this->p_send_accum = 0
+      				end if
+      				
+      			end if
+      			
+      			if( this->p_send_accum < this->p_send_limit ) then
+      				chunk_ = this->p_send_limit - this->p_send_accum
+      				if chunk_ > ( this->p_send_size - this->p_send_caret ) then
+      				   chunk_ = this->p_send_size - this->p_send_caret
+      				EndIf
+      			else
+      				chunk_ = 0
+      			end if
+      	   
+      	   else
+      	      chunk_ = this->p_send_size-this->p_send_caret      	      
+      	      
+      		end if
+      		
+      		'' update bytes/sec calc... reset counter
+      		if( abs(timer - this->p_send_disp_timer) >= 1 ) then
+      			
+      			this->p_send_rate = this->p_send_accum
+      			this->p_send_disp_timer = timer
+      			
+      			if( this->p_send_limit = 0 ) then
+      				this->p_send_accum = 0
+      			end if
+      			
+      		end if
+         
+         end scope
+         
+			if chunk_ > 2048 then chunk_ = 2048
 			
 			'' anything?
-			if( chunk_ ) then
+			if( chunk_ > 0 ) then
 				
 				'' send method
 				select case as const this->p_kind
@@ -60,7 +105,7 @@ namespace chi
 					
 				end select
 				
-				dim as integer do_close = FALSE
+				dim as int32_t do_close = FALSE
 				select case as const this->p_kind
 				case SOCK_TCP
 					do_close = (res <= 0)
@@ -74,7 +119,7 @@ namespace chi
 					this->p_send_caret = 0
 					
 					this->close( )
-					
+
 				end if
 				
 			else
@@ -92,15 +137,20 @@ namespace chi
 				dim as socket_lock lock_ = this->p_send_lock
 				
 				'' update
-				this->p_send_caret += res 
+				this->p_send_caret += res
+				this->p_send_accum += res
 				
 				'' caught up?
 				if( this->p_send_caret = this->p_send_size ) then
 					this->p_send_size  = 0
 					this->p_send_caret = 0
-				end if
+				endif
 				
-			end if
+   		else '( standby = TRUE )			
+           
+   			Sleep this->p_send_sleep, 1
+   		
+   		endif
 			
 		loop
 		

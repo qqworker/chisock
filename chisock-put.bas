@@ -2,79 +2,34 @@
 
 namespace chi
 	
-	private function base_HTTP_path( byref thing as string ) as string
-		
-		var res = instr( thing, "/" )
-		if( res = 0 ) then
-			function = thing
-		else
-			function = left( thing, res - 1 )
-		end if
-		
-	end function
-	
 	function socket.put_data _ 
 		( _ 
 			byval data_ as any ptr, _ 
-			byval size as integer _ 
-		) as integer
+			byval size as int32_t _ 
+		) as int32_t
 		
 		if( size <= 0 ) then
 			exit function
 		end if
 		
 		dim as socket_lock lock_ = p_send_lock
-		
-		'' handle speed limits
-		if( p_send_limit > 0 ) then
 			
-			if( abs(timer-p_send_timer) >= (1 / BUFF_RATE) ) then
-				p_send_timer = timer
-				
-				p_send_accum -= (p_send_limit / BUFF_RATE)
-				
-				if( p_send_accum < 0 ) then
-					p_send_accum = 0
-				end if
-				
-			end if
-			
-			if( p_send_accum + size > p_send_limit ) then
-				
-				if( p_send_accum = p_send_limit ) then
-					exit function
-				end if
-				
-				size = p_send_limit - p_send_accum
-				
-			end if
-			
-		end if
-		
-		'' update bytes/sec calc... reset counter
-		if( abs(timer-p_send_disp_timer) >= 1 ) then
-			
-			p_send_rate = p_send_accum
-			p_send_disp_timer = timer
-			
-			if( p_send_limit = 0 ) then
-				p_send_accum = 0
-			end if
-			
-		end if
-		
 		'' need more space?
-		dim as integer max_size = p_recv_buff_size-p_send_size
+		dim as int32_t max_size = p_send_buff_size-p_send_size
 		if( size > max_size ) then
+         
+         while size > max_size					
+			   p_send_buff_size += SEND_BUFF_SIZE
+			   max_size += SEND_BUFF_SIZE
+			wend
 			
-			p_send_buff_size += size - max_size
 			p_send_data = reallocate( p_send_data, p_send_buff_size )
 			
 		end if
 		
 		'' add data to buffer
 		memcpy( @p_send_data[p_send_size], data_, size )
-		p_send_size   += size
+		p_send_size += size		
 		
 		function = size
 		
@@ -83,7 +38,7 @@ namespace chi
 	function socket.put_line _ 
 		( _ 
 			byref text as string _ 
-		) as integer
+		) as int32_t
 		
 		dim as integer lt = cast(integer ptr, @text)[1]
 		if( lt ) then
@@ -98,13 +53,13 @@ namespace chi
 	function socket.put_string _ 
 		( _ 
 			byref text as string _ 
-		) as integer
+		) as int32_t
 		
 		if( quick_len(text) = 0 ) then
 			return TRUE
 		end if
 		
-		put( text[0], quick_len(text) )
+		put( text[0], cast( int32_t, quick_len(text) ) )
 		
 		function = TRUE
 		
@@ -115,7 +70,7 @@ namespace chi
 			byref server_name as string, _ 
 			byref method as string, _ 
 			byref post_data as string _
-		) as integer
+		) as int32_t
 	
 		/' does an HTTP request as specified '/
 	    
@@ -129,7 +84,7 @@ namespace chi
 		dim as string temp_server = server_name, URI = "/"
 		
 		/' get first slash, everything past that is a path '/
-		dim as integer first_slash = instr( temp_server, "/" )
+		dim as int32_t first_slash = instr( temp_server, "/" )
 	
 		/' there's a path. '/
 		if first_slash > 0 then
@@ -155,7 +110,7 @@ namespace chi
 	  
 			HTTPRequest += "Content-Type: application/x-www-form-urlencoded" + CR_LF
 	
-			dim as integer iLoc = ANY
+			dim as int32_t iLoc = ANY
 			dim as string buffString
 	
 			do
@@ -200,7 +155,7 @@ namespace chi
 			byref nick as string, _ 
 			byref realname as string, _ 
 			byref pass as string _
-		) as integer
+		) as int32_t
     
 		/' Password given? '/
 		if pass <> "" then

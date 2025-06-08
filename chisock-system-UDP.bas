@@ -4,10 +4,10 @@ namespace chi
 	
 	function UDP_client _ 
 		( _ 
-			byref result as uinteger _ 
-		) as integer
+			byref result as uint32_t _ 
+		) as int32_t
 	
-		dim as uInteger res = new_socket( AF_INET, SOCK_DGRAM, IPPROTO_IP )
+		dim as uint32_t res = new_socket( AF_INET, SOCK_DGRAM, IPPROTO_IP )
 		if( res = SOCKET_ERROR ) then 
 			return FAILED_INIT
 		end if
@@ -19,13 +19,13 @@ namespace chi
 	
 	function UDP_client _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref info as socket_info, _
 			byref server_ as string, _ 
-			byval port_ as integer _ 
-		) as integer
+			byval port_ as int32_t _ 
+		) as int32_t
 	
-		dim as integer ip = resolve( server_ )
+		dim as int32_t ip = resolve( server_ )
 		if( ip = NOT_AN_IP ) then
 			return FAILED_RESOLVE
 		end if
@@ -36,13 +36,13 @@ namespace chi
 	
 	function UDP_client _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref info as socket_info, _
-			byref ip as integer, _ 
-			byval port_ as integer _ 
-		) as integer
+			byref ip as int32_t, _ 
+			byval port_ as int32_t _ 
+		) as int32_t
 	
-		dim as uInteger res = new_socket( AF_INET, SOCK_DGRAM, IPPROTO_IP )
+		dim as uint32_t res = new_socket( AF_INET, SOCK_DGRAM, IPPROTO_IP )
 		if( res = SOCKET_ERROR ) then 
 			return FAILED_INIT
 		end if
@@ -53,13 +53,13 @@ namespace chi
 	
 	function UDP_server _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref info as socket_info, _
-			byval port as integer, _
-			byval ip as integer _
-		) as integer
+			byval port as int32_t, _
+			byval ip as int32_t _
+		) as int32_t
 	
-		dim as uInteger res = new_socket( AF_INET, SOCK_DGRAM, IPPROTO_IP )
+		dim as uint32_t res = new_socket( AF_INET, SOCK_DGRAM, IPPROTO_IP )
 		if( res = SOCKET_ERROR ) then 
 			return FAILED_INIT
 		end if

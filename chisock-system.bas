@@ -16,7 +16,7 @@ namespace chi
 		operator = cast(sockaddr ptr, @data)
 	end operator
 	
-	private function base_HTTP_path( byref thing as string ) as string
+	function base_HTTP_path( byref thing as string ) as string
 		var res = instr( thing, "/" )
 		if( res = 0 ) then
 			function = thing
@@ -27,7 +27,7 @@ namespace chi
 	
 	function translate_error _ 
 		( _ 
-			byval err_code as integer _
+			byval err_code as int32_t _
 		) as string
 		
 		select case as const err_code
@@ -51,18 +51,51 @@ namespace chi
 	function resolve _ 
 		( _ 
 			byref host as string _ 
-		) as uinteger
-	 	
+		) as uint32_t
+		
+		if len( host ) = 0 then
+		   return NOT_AN_IP
+		EndIf
 	 	dim as string host_temp = host
-		dim as uinteger ip = inet_addr( host_temp )
+		dim as uint32_t ip = inet_addr( host_temp )
 		if( ip = NOT_AN_IP ) then
 		 	host_temp = base_HTTP_path( ltrim( host_temp, "http://" ) )
-	  
+	      
+#Ifdef __FB_WIN32__
+   'gethostbyname( ) method
+
 			dim as hostent ptr info = gethostbyname( host_temp )
 			if( info = NULL ) then
 				return NOT_AN_IP
 			end if
-			function = *cast( uinteger ptr, info->h_addr )
+			function = *cast( uint32_t ptr, info->h_addr )
+			
+#Else
+   'getaddrinfo( ) method
+         
+         Dim As addrinfo hints
+         Dim As addrinfo Ptr servinfo
+         Dim As sockaddr_in Ptr addr
+         
+         'hints.ai_flags = AI_NUMERICHOST
+         hints.ai_family = PF_INET
+         hints.ai_socktype = SOCK_STREAM
+
+         If( getaddrinfo( host_temp, NULL, @hints, @servinfo ) <> 0 ) Then
+            Return NOT_AN_IP
+         End If
+                         
+         While servinfo->ai_family <> AF_INET
+            servinfo = servinfo->ai_next
+         Wend
+         
+         addr = cast( sockaddr_in Ptr, servinfo->ai_addr )
+         
+         function = *cptr( uint32_t Ptr, @( addr->sin_addr ) )
+         freeaddrinfo( servinfo )
+         
+#EndIf
+
 		else
 			function = ip
 		end if
@@ -71,21 +104,21 @@ namespace chi
 	
 	function client_core _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref info as socket_info, _
-			byval ip as integer, _ 
-			byval port as integer, _ 
-			byval from_socket as uinteger, _ 
-			byval do_connect as integer = TRUE _
-		) as integer
+			byval ip as int32_t, _ 
+			byval port as int32_t, _ 
+			byval from_socket as uint32_t, _ 
+			byval do_connect as int32_t = TRUE _
+		) as int32_t
 		
-		dim as integer reuse = C_TRUE
+		dim as long reuse = C_TRUE
 		
 		if( setsockopt( from_socket, _ 
 		               SOL_SOCKET, _ 
 		               SO_REUSEADDR, _ 
 		               cast(any ptr, @reuse), _ 
-		               len(integer) ) = SOCKET_ERROR ) then 
+		               len(long) ) = SOCKET_ERROR ) then 
 			return FAILED_REUSE
 		end if
 		
@@ -104,21 +137,24 @@ namespace chi
 	
 	function server_core _ 
 		( _ 
-			byref result as uinteger, _ 
+			byref result as uint32_t, _ 
 			byref info as socket_info, _
-			byval port as integer, _ 
-			byval ip as integer, _
-			byval from_socket as uinteger _
-		) as integer
+			byval port as int32_t, _ 
+			byval ip as int32_t, _
+			byval from_socket as uint32_t _
+		) as int32_t
 	
-		dim as integer reuse = C_TRUE
+	#if 0
+	   'don't want to reuse..
+		dim as int32_t reuse = C_TRUE
 		if( setsockopt( from_socket, _ 
 		               SOL_SOCKET, _ 
 		               SO_REUSEADDR, _ 
 		               cast(any ptr, @reuse), _ 
-		               len(integer) ) = SOCKET_ERROR ) then 
+		               len(long) ) = SOCKET_ERROR ) then 
 			return FAILED_REUSE
 		end if
+   #endif
 	    
 		info = type( AF_INET, htons( port ), ip )
 		if bind( from_socket, _ 
@@ -133,9 +169,9 @@ namespace chi
 	
 	function close _
 		( _ 
-			byval sock_ as uinteger _ 
-		) as integer
-		dim as integer res=any
+			byval sock_ as uint32_t _ 
+		) as int32_t
+		dim as int32_t res=any
 		#ifdef __FB_Win32__
 			res = closesocket( sock_ )
 		#else
@@ -146,8 +182,8 @@ namespace chi
 	
 	function is_readable _
 		( _ 
-			byval sock_ as uinteger _ 
-		) as integer
+			byval sock_ as ulong _ 
+		) as int32_t
 		
 		if( sock_ = SOCKET_ERROR ) then
 			exit function
@@ -157,14 +193,14 @@ namespace chi
 		fd_zero( @set )
 		fd_set_( sock_, @set )
 	
-		dim as ulongint timeout = 0
+		dim as ulongint timeout = 1
 		select_( sock_+1, @set, NULL, NULL, cast(timeval ptr, @timeout) )
 	
 		return (FD_ISSET( sock_, @set ) <> 0)
 		
 	end function
 	
-	function new_sockaddr overload( byval serv as integer, byval port as short ) as socket_info ptr
+	function new_sockaddr overload( byval serv as int32_t, byval port as short ) as socket_info ptr
 		function = new socket_info( AF_INET, htons( port ), serv )
 	end function
 	

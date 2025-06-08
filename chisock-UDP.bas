@@ -4,9 +4,9 @@ namespace chi
 	
 	function socket.UDP_client _
 		( _ 
-		) as integer
+		) as int32_t
 		
-		dim as uinteger sock_back, result = chi.UDP_client( sock_back )
+		dim as uint32_t sock_back, result = chi.UDP_client( sock_back )
 		if( result <> 0 ) then
 			return result
 		end if
@@ -18,11 +18,11 @@ namespace chi
 		
 	function socket.UDP_client _
 		( _ 
-			byval ip as integer, _
-			byval port as integer _
-		) as integer
+			byval ip as int32_t, _
+			byval port as int32_t _
+		) as int32_t
 			
-		dim as uinteger sock_back, result = chi.UDP_client( sock_back, cnx_info, ip, port )
+		dim as uint32_t sock_back, result = chi.UDP_client( sock_back, cnx_info, ip, port )
 		if( result <> 0 ) then
 			return result
 		end if
@@ -35,10 +35,10 @@ namespace chi
 	function socket.UDP_client _
 		( _ 
 			byref server_ as string, _
-			byval port as integer _
-		) as integer
+			byval port as int32_t _
+		) as int32_t
 		
-		dim as uinteger sock_back, result = chi.UDP_client( sock_back, cnx_info, server_, port )
+		dim as uint32_t sock_back, result = chi.UDP_client( sock_back, cnx_info, server_, port )
 		if( result <> 0 ) then
 			return result
 		end if
@@ -50,11 +50,11 @@ namespace chi
 	
 	function socket.UDP_server _
 		( _ 
-			byval port as integer, _
-			byval ip as integer _
-		) as integer
+			byval port as int32_t, _
+			byval ip as int32_t _
+		) as int32_t
 		
-		dim as uinteger sock_back, result = chi.UDP_server( sock_back, cnx_info, port, ip )
+		dim as uint32_t sock_back, result = chi.UDP_server( sock_back, cnx_info, port, ip )
 		if( result <> 0 ) then
 			return result
 		end if
@@ -66,11 +66,11 @@ namespace chi
 	
 	function socket.UDP_connectionless_server _
 		( _ 
-			byval port as integer _
-		) as integer
+			byval port as int32_t _
+		) as int32_t
 		
 		dim as socket_info info
-		dim as uinteger sock_back, result = chi.UDP_server( sock_back, info, port, INADDR_ANY )
+		dim as uint32_t sock_back, result = chi.UDP_server( sock_back, info, port, INADDR_ANY )
 		if( result <> 0 ) then
 			return result
 		end if
@@ -83,7 +83,7 @@ namespace chi
 	function socket.set_destination _ 
 		( _
 			byval info as socket_info ptr _
-		) as integer
+		) as int32_t
 		
 		if( p_kind <> SOCK_UDP_CONNECTIONLESS ) then
 			exit function
