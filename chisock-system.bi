@@ -25,7 +25,8 @@
 #undef socket
 #undef TRUE
 #undef FALSE
-#undef opaque
+'这段代码不知道为什么要取消宏定义
+'#undef opaque
 
 const as int32_t TRUE = (0 = 0), FALSE = (0 = 1)
 
